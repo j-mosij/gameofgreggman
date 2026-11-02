@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automata & Bytebeat Audio Visual Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0b0f19;
+            color: #e2e8f0;
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            touch-action: none;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(51, 65, 85, 0.8);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen select-none">
+
+    <!-- Top Navigation Header -->
+    <header class="flex items-center justify-between px-6 py-3 bg-slate-900 border-b border-slate-800 z-10">
+        <div class="flex items-center space-x-3">
+            <div class="w-3 h-3 rounded-full bg-cyan-400 animate-pulse"></div>
+            <h1 class="text-base font-bold tracking-wider text-slate-100 uppercase">Automata Bytebeat Lab</h1>
+        </div>
+        <div class="flex items-center space-x-3">
+            <button id="btn-audio-toggle" class="px-4 py-2 text-sm font-semibold text-white bg-cyan-600 hover:bg-cyan-500 rounded-lg shadow-md transition">
+                Start Audio Engine
+            </button>
+            <button id="btn-reset-grid" class="px-3 py-2 text-sm font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-lg transition">
+                Clear Grid
+            </button>
+            <button id="btn-random-grid" class="px-3 py-2 text-sm font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-lg transition">
+                Randomize
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Area (Sidebar + Viewport) -->
+    <div class="flex flex-1 overflow-hidden">
+        
+        <!-- Sidebar Controls -->
+        <aside class="w-96 bg-slate-900/90 border-r border-slate-800 flex flex-col p-4 overflow-y-auto custom-scrollbar space-y-6">
+            
+            <!-- Automata Rules & Presets -->
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Automata Mode</label>
+                <select id="select-rule" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500">
+                    <option value="conway">Conway's Game of Life (B3/S23)</option>
+                    <option value="highlife">HighLife (B36/S23)</option>
+                    <option value="seeds">Seeds (B2/S)</option>
+                    <option value="daynight">Day & Night (B3678/S34678)</option>
+                </select>
+            </div>
+
+            <!-- Pattern Stamping Library -->
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Stamp Artifact Library</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button class="btn-stamp px-3 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-medium rounded-lg text-slate-200 text-left transition" data-pattern="glider">Glider</button>
+                    <button class="btn-stamp px-3 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-medium rounded-lg text-slate-200 text-left transition" data-pattern="spaceship">Lightweight Spaceship</button>
+                    <button class="btn-stamp px-3 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-medium rounded-lg text-slate-200 text-left transition" data-pattern="gosper">Gosper Glider Gun</button>
+                    <button class="btn-stamp px-3 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-medium rounded-lg text-slate-200 text-left transition" data-pattern="pulsar">Pulsar Oscillator</button>
+                </div>
+            </div>
+
+            <!-- Bytebeat Audio Formula -->
+            <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Bytebeat Expression</label>
+                    <span id="formula-status" class="text-xs text-emerald-400 font-mono">Active</span>
+                </div>
+                <textarea id="input-formula" rows="2" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 font-mono text-xs text-cyan-300 focus:outline-none focus:border-cyan-500 resize-none" spellcheck="false">(t*(t>>12|t>>8))&63|(t>>4)</textarea>
+                <div class="grid grid-cols-2 gap-1.5 pt-1">
+                    <button class="btn-preset px-2 py-1 bg-slate-800 hover:bg-slate-700 text-[11px] font-mono text-slate-300 rounded transition" data-code="(t*(t>>12|t>>8))&63|(t>>4)">Greggman Classic</button>
+                    <button class="btn-preset px-2 py-1 bg-slate-800 hover:bg-slate-700 text-[11px] font-mono text-slate-300 rounded transition" data-code="((t*5&t>>7)|(t*3&t>>8)|(t*2&t>>9))-1">Harmonic Ambient</button>
+                    <button class="btn-preset px-2 py-1 bg-slate-800 hover:bg-slate-700 text-[11px] font-mono text-slate-300 rounded transition" data-code="(t>>6|t|t>>(t>>16))*10+((t>>11)&7)">Sierpinski Melodies</button>
+                    <button class="btn-preset px-2 py-1 bg-slate-800 hover:bg-slate-700 text-[11px] font-mono text-slate-300 rounded transition" data-code="(t*(life%32|t>>8))&(t>>4)">Automata Sonification</button>
+                </div>
+            </div>
+
+            <!-- Audio Effects Pipeline Controls -->
+            <div class="space-y-4 pt-2 border-t border-slate-800">
+                <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Audio Effects & Processing</label>
+                
+                <!-- Speed / Clock Rate -->
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-400">Step Rate (FPS)</span>
+                        <span id="val-speed" class="font-mono text-cyan-400">15</span>
+                    </div>
+                    <input type="range" id="slider-speed" min="1" max="60" value="15" class="w-full accent-cyan-500 bg-slate-950 h-1.5 rounded-lg appearance-none cursor-pointer">
+                </div>
+
+                <!-- Lowpass Filter Cutoff -->
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-400">Filter Cutoff (Hz)</span>
+                        <span id="val-filter" class="font-mono text-cyan-400">4000</span>
+                    </div>
+                    <input type="range" id="slider-filter" min="200" max="8000" value="4000" class="w-full accent-cyan-500 bg-slate-950 h-1.5 rounded-lg appearance-none cursor-pointer">
+                </div>
+
+                <!-- Delay Feedback -->
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-400">Echo Delay Level</span>
+                        <span id="val-delay" class="font-mono text-cyan-400">30%</span>
+                    </div>
+                    <input type="range" id="slider-delay" min="0" max="80" value="30" class="w-full accent-cyan-500 bg-slate-950 h-1.5 rounded-lg appearance-none cursor-pointer">
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- Visual Canvas Viewport -->
+        <main class="flex-1 relative bg-slate-950">
+            <canvas id="main-canvas" class="w-full h-full"></canvas>
+            <div class="absolute bottom-4 left-4 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-800 text-xs font-mono text-slate-400">
+                Active Cells: <span id="cell-count-display" class="text-cyan-400">0</span>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Grid & State Parameters
+        const GRID_SIZE = 64;
+        let grid = new Uint8Array(GRID_SIZE * GRID_SIZE);
+        let nextGrid = new Uint8Array(GRID_SIZE * GRID_SIZE);
+        let activePattern = null;
+        let liveCellCount = 0;
+
+        // Audio State
+        let audioCtx = null;
+        let scriptNode = null;
+        let filterNode = null;
+        let delayNode = null;
+        let delayGainNode = null;
+        let isAudioPlaying = false;
+        let sampleCounter = 0;
+        let compiledFormula = (t, life) => (t * (t >> 12 | t >> 8)) & 63 | (t >> 4);
+
+        // Canvas Setup
+        const canvas = document.getElementById('main-canvas');
+        const ctx = canvas.getContext('2d');
+        let cellSize = 10;
+
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            cellSize = Math.min(canvas.width, canvas.height) / GRID_SIZE;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Initialize Automata Board
+        function randomizeGrid() {
+            liveCellCount = 0;
+            for (let i = 0; i < grid.length; i++) {
+                grid[i] = Math.random() > 0.85 ? 1 : 0;
+                if (grid[i]) liveCellCount++;
+            }
+            updateCellCountDisplay();
+        }
+
+        function clearGrid() {
+            grid.fill(0);
+            liveCellCount = 0;
+            updateCellCountDisplay();
+        }
+
+        function updateCellCountDisplay() {
+            document.getElementById('cell-count-display').textContent = liveCellCount;
+        }
+
+        // Cellular Automata Step Update
+        function updateAutomata() {
+            const rule = document.getElementById('select-rule').value;
+            let active = 0;
+
+            for (let y = 0; y < GRID_SIZE; y++) {
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    const idx = y * GRID_SIZE + x;
+                    let neighbors = 0;
+
+                    for (let dy = -1; dy <= 1; dy++) {
+                        for (let dx = -1; dx <= 1; dx++) {
+                            if (dx === 0 && dy === 0) continue;
+                            const nx = (x + dx + GRID_SIZE) % GRID_SIZE;
+                            const ny = (y + dy + GRID_SIZE) % GRID_SIZE;
+                            neighbors += grid[ny * GRID_SIZE + nx];
+                        }
+                    }
+
+                    const state = grid[idx];
+                    let newState = 0;
+
+                    if (rule === 'conway') {
+                        newState = (state === 1 && (neighbors === 2 || neighbors === 3)) || (state === 0 && neighbors === 3) ? 1 : 0;
+                    } else if (rule === 'highlife') {
+                        newState = (state === 1 && (neighbors === 2 || neighbors === 3)) || (state === 0 && (neighbors === 3 || neighbors === 6)) ? 1 : 0;
+                    } else if (rule === 'seeds') {
+                        newState = (state === 0 && neighbors === 2) ? 1 : 0;
+                    } else if (rule === 'daynight') {
+                        newState = (state === 1 && [3,4,6,7,8].includes(neighbors)) || (state === 0 && [3,6,7,8].includes(neighbors)) ? 1 : 0;
+                    }
+
+                    nextGrid[idx] = newState;
+                    if (newState) active++;
+                }
+            }
+
+            const temp = grid;
+            grid = nextGrid;
+            nextGrid = temp;
+            liveCellCount = active;
+            updateCellCountDisplay();
+        }
+
+        // Web Audio API Setup
+        function initAudio() {
+            if (audioCtx) return;
+
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext({ sampleRate: 8000 });
+
+            scriptNode = audioCtx.createScriptProcessor(2048, 0, 1);
+            filterNode = audioCtx.createBiquadFilter();
+            delayNode = audioCtx.createDelay();
+            delayGainNode = audioCtx.createGain();
+
+            filterNode.type = 'lowpass';
+            filterNode.frequency.value = parseFloat(document.getElementById('slider-filter').value);
+
+            delayNode.delayTime.value = 0.25;
+            delayGainNode.gain.value = parseFloat(document.getElementById('slider-delay').value) / 100;
+
+            scriptNode.onaudioprocess = (e) => {
+                const output = e.outputBuffer.getChannelData(0);
+                for (let i = 0; i < output.length; i++) {
+                    sampleCounter++;
+                    try {
+                        const outByte = compiledFormula(sampleCounter, liveCellCount);
+                        output[i] = ((outByte & 0xFF) / 127.5) - 1.0;
+                    } catch (err) {
+                        output[i] = 0;
+                    }
+                }
+            };
+
+            // Audio Routing: Script -> Filter -> Main & Delay Feedback Loop
+            scriptNode.connect(filterNode);
+            filterNode.connect(audioCtx.destination);
+            
+            filterNode.connect(delayNode);
+            delayNode.connect(delayGainNode);
+            delayGainNode.connect(delayNode);
+            delayGainNode.connect(audioCtx.destination);
+        }
+
+        function toggleAudio() {
+            if (!audioCtx) initAudio();
+            const btn = document.getElementById('btn-audio-toggle');
+            
+            if (isAudioPlaying) {
+                audioCtx.suspend();
+                isAudioPlaying = false;
+                btn.textContent = "Start Audio Engine";
+                btn.classList.replace('bg-rose-600', 'bg-cyan-600');
+            } else {
+                audioCtx.resume();
+                isAudioPlaying = true;
+                btn.textContent = "Pause Audio Engine";
+                btn.classList.replace('bg-cyan-600', 'bg-rose-600');
+            }
+        }
+
+        // Compile Formula Safely
+        const formulaInput = document.getElementById('input-formula');
+        const formulaStatus = document.getElementById('formula-status');
+
+        function compileFormula() {
+            try {
+                const expr = formulaInput.value.trim();
+                const fn = new Function('t', 'life', `return (${expr});`);
+                fn(0, 0); // Test call
+                compiledFormula = fn;
+                formulaStatus.textContent = "Valid";
+                formulaStatus.className = "text-xs text-emerald-400 font-mono";
+            } catch (err) {
+                formulaStatus.textContent = "Error";
+                formulaStatus.className = "text-xs text-rose-400 font-mono";
+            }
+        }
+        formulaInput.addEventListener('input', compileFormula);
+
+        // Render Canvas
+        function draw() {
+            ctx.fillStyle = '#0b0f19';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const offsetX = (canvas.width - GRID_SIZE * cellSize) / 2;
+            const offsetY = (canvas.height - GRID_SIZE * cellSize) / 2;
+
+            ctx.strokeStyle = 'rgba(30, 41, 59, 0.5)';
+            ctx.lineWidth = 0.5;
+
+            for (let y = 0; y < GRID_SIZE; y++) {
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    const rectX = offsetX + x * cellSize;
+                    const rectY = offsetY + y * cellSize;
+
+                    if (grid[y * GRID_SIZE + x] === 1) {
+                        ctx.fillStyle = '#22d3ee';
+                        ctx.fillRect(rectX, rectY, cellSize - 0.5, cellSize - 0.5);
+                    } else {
+                        ctx.strokeRect(rectX, rectY, cellSize, cellSize);
+                    }
+                }
+            }
+
+            requestAnimationFrame(draw);
+        }
+
+        // Pattern Stamping Coordinates
+        const PATTERNS = {
+            glider: [[0,1], [1,2], [2,0], [2,1], [2,2]],
+            spaceship: [[0,1], [0,4], [1,0], [2,0], [3,0], [3,4], [4,0], [4,1], [4,2], [4,3]],
+            gosper: [[4,0],[4,1],[5,0],[5,1],[4,10],[5,10],[6,10],[3,11],[7,11],[2,12],[8,12],[2,13],[8,13],[5,14],[3,15],[7,15],[4,16],[5,16],[6,16],[5,17]],
+            pulsar: [[2,4],[2,5],[2,6],[4,2],[5,2],[6,2],[4,7],[5,7],[6,7],[7,4],[7,5],[7,6]]
+        };
+
+        // Interaction Event Handling
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const offsetX = (canvas.width - GRID_SIZE * cellSize) / 2;
+            const offsetY = (canvas.height - GRID_SIZE * cellSize) / 2;
+
+            const gridX = Math.floor((e.clientX - rect.left - offsetX) / cellSize);
+            const gridY = Math.floor((e.clientY - rect.top - offsetY) / cellSize);
+
+            if (gridX >= 0 && gridX < GRID_SIZE && gridY >= 0 && gridY < GRID_SIZE) {
+                if (activePattern && PATTERNS[activePattern]) {
+                    PATTERNS[activePattern].forEach(([dy, dx]) => {
+                        const px = (gridX + dx) % GRID_SIZE;
+                        const py = (gridY + dy) % GRID_SIZE;
+                        grid[py * GRID_SIZE + px] = 1;
+                    });
+                } else {
+                    const idx = gridY * GRID_SIZE + gridX;
+                    grid[idx] = grid[idx] ? 0 : 1;
+                }
+                updateCellCountDisplay();
+            }
+        });
+
+        // Event Listeners for Controls
+        document.getElementById('btn-audio-toggle').addEventListener('click', toggleAudio);
+        document.getElementById('btn-reset-grid').addEventListener('click', clearGrid);
+        document.getElementById('btn-random-grid').addEventListener('click', randomizeGrid);
+
+        document.querySelectorAll('.btn-stamp').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.btn-stamp').forEach(b => b.classList.remove('ring-2', 'ring-cyan-500'));
+                if (activePattern === btn.dataset.pattern) {
+                    activePattern = null;
+                } else {
+                    activePattern = btn.dataset.pattern;
+                    btn.classList.add('ring-2', 'ring-cyan-500');
+                }
+            });
+        });
+
+        document.querySelectorAll('.btn-preset').forEach(btn => {
+            btn.addEventListener('click', () => {
+                formulaInput.value = btn.dataset.code;
+                compileFormula();
+            });
+        });
+
+        // Sliders
+        const sliderSpeed = document.getElementById('slider-speed');
+        let simInterval = setInterval(updateAutomata, 1000 / parseInt(sliderSpeed.value));
+        sliderSpeed.addEventListener('input', (e) => {
+            document.getElementById('val-speed').textContent = e.target.value;
+            clearInterval(simInterval);
+            simInterval = setInterval(updateAutomata, 1000 / parseInt(e.target.value));
+        });
+
+        document.getElementById('slider-filter').addEventListener('input', (e) => {
+            document.getElementById('val-filter').textContent = e.target.value;
+            if (filterNode) filterNode.frequency.value = parseFloat(e.target.value);
+        });
+
+        document.getElementById('slider-delay').addEventListener('input', (e) => {
+            document.getElementById('val-delay').textContent = e.target.value + '%';
+            if (delayGainNode) delayGainNode.gain.value = parseFloat(e.target.value) / 100;
+        });
+
+        // Initial setup
+        randomizeGrid();
+        compileFormula();
+        requestAnimationFrame(draw);
+    </script>
+</body>
+</html>
